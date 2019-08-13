@@ -335,11 +335,11 @@ def uwsgi_pypy_paste_loader(config):
     load a .ini paste app
     """
     global wsgi_application
-    c = ffi.string(config)
-    if c.startswith(b'config:'):
-        c = c[7:]
-    if c[0] != b'/'[0]:
-        c = os.getcwd() + '/' + c.decode()
+    c = ffi.string(config).decode()
+    lhs, sep, rhs = c.partition('config:')
+    if sep and not lhs:
+        c = rhs
+    c = os.path.abspath(c)
     try:
         from paste.script.util.logging_config import fileConfig
         fileConfig(c)
