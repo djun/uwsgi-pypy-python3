@@ -540,7 +540,7 @@ uwsgi.hostname = ffi.string(lib.uwsgi.hostname)
 def uwsgi_pypy_uwsgi_register_signal(signum, kind, handler):
     cb = ffi.callback('void(int)', handler)
     uwsgi_gc.append(cb)
-    if lib.uwsgi_register_signal(signum, ffi.new("char[]", kind), cb, lib.pypy_plugin.modifier1) < 0:
+    if lib.uwsgi_register_signal(signum, ffi.new("char[]", kind.encode()), cb, lib.pypy_plugin.modifier1) < 0:
         raise Exception("unable to register signal %d" % signum)
 uwsgi.register_signal = uwsgi_pypy_uwsgi_register_signal
 
