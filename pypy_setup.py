@@ -335,11 +335,11 @@ def uwsgi_pypy_paste_loader(config):
     load a .ini paste app
     """
     global wsgi_application
-    c = ffi.string(config)
-    if c.startswith(b'config:'):
-        c = c[7:]
-    if c[0] != b'/'[0]:
-        c = os.getcwd() + '/' + c.decode()
+    c = ffi.string(config).decode()
+    lhs, sep, rhs = c.partition('config:')
+    if sep and not lhs:
+        c = rhs
+    c = os.path.abspath(c)
     try:
         from paste.script.util.logging_config import fileConfig
         fileConfig(c)
@@ -481,7 +481,7 @@ def uwsgi_pypy_wsgi_handler(wsgi_req):
     environ = {}
     iov = wsgi_req.hvec
     for i in range(0, wsgi_req.var_cnt, 2):
-        environ[ffi.string(ffi.cast("char*", iov[i].iov_base), iov[i].iov_len).decode()] = ffi.string(ffi.cast("char*", iov[i+1].iov_base), iov[i+1].iov_len).decode()
+        environ[ffi.string(ffi.cast("char*", iov[i].iov_base), iov[i].iov_len).decode("latin-1")] = ffi.string(ffi.cast("char*", iov[i+1].iov_base), iov[i+1].iov_len).decode("latin-1")
 
     environ['wsgi.version'] = (1, 0)
     scheme = 'http'
@@ -540,7 +540,7 @@ uwsgi.hostname = ffi.string(lib.uwsgi.hostname)
 def uwsgi_pypy_uwsgi_register_signal(signum, kind, handler):
     cb = ffi.callback('void(int)', handler)
     uwsgi_gc.append(cb)
-    if lib.uwsgi_register_signal(signum, ffi.new("char[]", kind), cb, lib.pypy_plugin.modifier1) < 0:
+    if lib.uwsgi_register_signal(signum, ffi.new("char[]", kind.encode()), cb, lib.pypy_plugin.modifier1) < 0:
         raise Exception("unable to register signal %d" % signum)
 uwsgi.register_signal = uwsgi_pypy_uwsgi_register_signal
 
